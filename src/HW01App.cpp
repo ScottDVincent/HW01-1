@@ -1,7 +1,13 @@
+/*@note This project satisfies goals A.1 (rectangle), A.2 (circle), A.4 (gradient),
+A.6 (tint), C (draw a picture), D (save the image for easy sharing)
+*/
+
 #include "cinder/app/AppBasic.h"
 #include "cinder/gl/gl.h"
 #include "cinder/gl/Texture.h"
 #include "cinder/ImageIo.h"
+#include "boost/date_time/posix_time/posix_time.hpp"
+#include "Resources.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -17,6 +23,10 @@ class HW01App : public AppBasic {
 
 private:
 	Surface* mySurface_; 
+	Surface* cloneSurface_;
+	int frame_number_;
+	boost::posix_time::ptime app_start_time_;
+
 	static const int appWidth = 800;
 	static const int appHeight = 600;
 	static const int textureSize = 1024;
@@ -32,11 +42,13 @@ void HW01App::prepareSettings(Settings* settings){
 	(*settings).setResizable(false);
 }
 
+// The rectangle method. Displays a rectangle.
 void HW01App::rectangle(uint8_t* pixels, int startx, int starty, int width, int height, Color8u fill){
 	int x;
 	int y;
 
-	for (y = starty; y < (starty + width); y++){
+	// to create the rectangle
+	for (y = starty; y < (starty + height); y++){
 		for(x = startx; x < (startx + width); x++){
 			pixels[3*(x + y * textureSize)] = fill.r;
 			pixels[3*(x + y * textureSize) + 1] = fill.g;
@@ -45,6 +57,7 @@ void HW01App::rectangle(uint8_t* pixels, int startx, int starty, int width, int 
 	}
 }
 
+// The circle method! I thought it would be fun to make the line thickness variable, so I did.
 void HW01App::circle(uint8_t* pixels, int centerx, int centery, int radius, int thickness, Color8u color){
 	if (radius <= 0) 
 		return;
@@ -60,6 +73,7 @@ void HW01App::circle(uint8_t* pixels, int centerx, int centery, int radius, int 
 	}
 }
 	
+// Method for the color gradient.
 void HW01App::gradient(uint8_t* pixels, Color8u c1, Color8u c2){
 	int y, x;
 	Color8u G = Color8u(0,0,0);
@@ -76,6 +90,7 @@ void HW01App::gradient(uint8_t* pixels, Color8u c1, Color8u c2){
 	}
 }
 
+// Color tint method
 void HW01App::tint(uint8_t* pixels, Color8u color){
 	for(int y = 0; y < appHeight ; y++){
 		for(int x = 0; x < appWidth; x++){
@@ -86,31 +101,43 @@ void HW01App::tint(uint8_t* pixels, Color8u color){
 	}
 }
 
+// Attempted blur method
 void HW01App::blur(uint8_t* pixels){
-	Surface cloneSurface = Surface(textureSize, textureSize, false);
-	uint8_t* dataArray = (cloneSurface).getData();
-	dataArray = pixels;
-
+	
 }
+
 
 void HW01App::setup(){
 	mySurface_ = new Surface(textureSize, textureSize, false);
-
 }
 
-void HW01App::mouseDown( MouseEvent event )
-{
+void HW01App::mouseDown( MouseEvent event ){
 }
 
 void HW01App::update()
 {
 	uint8_t* dataArray = (*mySurface_).getData();
 
-	gradient(dataArray, Color8u(255, 0, 0), Color8u(0, 0, 255));
-	tint(dataArray, Color8u(0, 255, 0));
-	rectangle(dataArray, 50, 100, 50, 100, Color8u(255, 0, 0));
-	circle(dataArray, 400, 357, 78, 25, Color8u(0, 0, 0));
-	blur(dataArray);
+	// Makes a pretty background
+	gradient(dataArray, Color8u(0, 0, 255), Color8u(255, 0, 0));
+	tint(dataArray, Color8u(0, 255, 0)); 
+	
+	// Kind of looks like a sun
+	circle(dataArray, 650, 100, 75, 75, Color8u(255, 255, 0));
+
+	// These together kind of look like a little stick guy
+	rectangle(dataArray, 80, 450, 25, 100, Color8u(100, 12, 100));
+	circle(dataArray, 100, 410, 50, 10, Color8u(100, 12, 100));
+	circle(dataArray, 125, 395, 5, 5, Color8u(100, 12, 100));
+
+	//blur(dataArray);
+
+	// Saves the first frame of the image
+	if(frame_number_ == 0){
+		writeImage("sbaker.png", *mySurface_);
+		app_start_time_ = boost::posix_time::microsec_clock::local_time();
+	}
+	
 }
 
 void HW01App::draw()
